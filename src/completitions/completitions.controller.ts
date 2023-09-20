@@ -1,31 +1,25 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
-  HttpException,
-  HttpStatus,
-  Param,
-  Patch,
   Post,
   Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { CompletitionsService } from './completitions.service';
-import { CreateCompletitionDto } from './dto/create-completition.dto';
-import { UpdateCompletitionDto } from './dto/update-completition.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as unrar from 'unrar-js';
 import * as Docker from 'dockerode';
 import { Response } from 'express';
+import { parseString } from 'xml2js';
 
 
 @Controller('completitions')
 export class CompletitionsController {
-  constructor(private readonly completitionsService: CompletitionsService) { }
+  constructor(private readonly completitionsService: CompletitionsService) {}
 
   @Post('/generate')
   async completition(@Body('input') input: string) {
@@ -34,7 +28,10 @@ export class CompletitionsController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadFile(@UploadedFile() file: Express.Multer.File, @Body('path') userPath: string) {
+  uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('path') userPath: string,
+  ) {
     if (!fs.existsSync(userPath)) {
       // Create the directory if it doesn't exist
       fs.mkdirSync(userPath, { recursive: true });
@@ -91,7 +88,7 @@ export class CompletitionsController {
   @Get('/contents')
   async contents(@Res() res: Response) {
     try {
-      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`; 
+      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
       res.header('Content-Type', 'text/plain');
@@ -104,7 +101,7 @@ export class CompletitionsController {
   @Post('/write-to-file')
   async writter(@Body() body: { textContent: string }) {
     try {
-      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`; 
+      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const newContent = body.textContent; // Get the posted text content
 
       fs.writeFileSync(filePath, newContent); // Write the new content to the file
@@ -119,7 +116,7 @@ export class CompletitionsController {
   async buildAndRun() {
     try {
       const docker = new Docker();
-      const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
+      const contextPath = './public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
       const dockerfilePath = `${contextPath}/Dockerfile`;
 
       // Check if the Dockerfile exists
@@ -127,12 +124,15 @@ export class CompletitionsController {
         throw new Error('Dockerfile not found');
       }
 
-      const buildStream = await docker.buildImage({
-        context: contextPath,
-        src: ['Dockerfile', 'pom.xml', 'src'], // List of files to include in the build context
-      }, {
-        t: 'javalista:latest',
-      });
+      const buildStream = await docker.buildImage(
+        {
+          context: contextPath,
+          src: ['Dockerfile', 'pom.xml', 'src'], // List of files to include in the build context
+        },
+        {
+          t: 'javapit:latest',
+        },
+      );
 
       // Attach event listeners to capture build progress
       buildStream.on('data', (data) => {
@@ -144,10 +144,13 @@ export class CompletitionsController {
         console.log('Image build completed.');
         // Now, you can run the Docker container
         const container = await docker.createContainer({
-          Image: 'javalista:latest',
+          Image: 'javapit:latest',
           AttachStdout: true,
           AttachStderr: true,
           Cmd: ['cat', 'test-output.txt'],
+          HostConfig: {
+            AutoRemove: true,
+          },
         });
 
         await container.start();
@@ -170,66 +173,6 @@ export class CompletitionsController {
     }
   }
 
-  @Post('/build-and-run-sync')
-  async buildAndRunSync() {
-    try {
-      const docker = new Docker();
-      const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
-      const dockerfilePath = `${contextPath}/Dockerfile`;
-
-      // Check if the Dockerfile exists
-      if (!fs.existsSync(dockerfilePath)) {
-        throw new Error('Dockerfile not found');
-      }
-
-      const buildStream = await docker.buildImage(
-        {
-          context: contextPath,
-          src: ['Dockerfile'], // List of files to include in the build context
-        },
-        {
-          t: 'javalista:latest',
-        }
-      );
-
-      // Wait for the image build to complete
-      await new Promise<void>((resolve, reject) => {
-        buildStream.on('end', () => {
-          console.log('Image build completed.');
-          resolve();
-        });
-        buildStream.on('error', (err) => {
-          console.error('Error during image build:', err);
-          reject(err);
-        });
-      });
-
-      // Create and start the Docker container
-      const container = await docker.createContainer({
-        Image: 'javalista:latest',
-        AttachStdout: true,
-        AttachStderr: true,
-        Cmd: ['cat', 'test-output.txt'],
-      });
-
-      await container.start();
-
-      // Attach to the container's output stream (stdout and stderr)
-      const logsStream = await container.logs({
-        follow: true,
-        stdout: true,
-        stderr: true,
-      });
-
-      // Forward container logs to your response or log as needed
-      logsStream.pipe(process.stdout);
-
-      return 'Docker image built and container started successfully.';
-    } catch (error) {
-      console.error('Error:', error);
-      throw new HttpException('Failed to build and run Docker image', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
   /**
    * Retrieves the output of the container execution
    */
@@ -239,9 +182,12 @@ export class CompletitionsController {
 
     // Define the options for running the container
     const containerOptions = {
-      Image: 'javalista:latest', // Specify the Docker image to run
+      Image: 'javapit:latest', // Specify the Docker image to run
       Tty: true, // Enable TTY to capture the output
       Cmd: ['cat', '/app/test-output.txt'], // Command to execute
+      HostConfig: {
+        AutoRemove: true,
+      },
     };
 
     try {
@@ -250,7 +196,159 @@ export class CompletitionsController {
       await container.start();
 
       // Wait for the container to exit
-      const stream = await container.logs({ follow: true, stdout: true, stderr: true });
+      const stream = await container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+      });
+
+      return new Promise<{ content: string }>((resolve, reject) => {
+        let output = '';
+
+        // Capture the container's output
+        stream.on('data', (chunk) => {
+          output += chunk.toString();
+        });
+
+        // Handle the end of the output stream
+        stream.on('end', () => {
+          resolve({ content: output });
+        });
+
+        // Handle any errors
+        stream.on('error', (err) => {
+          reject(err);
+        });
+      });
+    } catch (error) {
+      throw new Error(`Error retrieving text: ${error.message}`);
+    }
+  }
+
+  @Get('/retrieve-pit')
+  async retrieve_pit_json(@Res() res: Response) {
+    const docker = new Docker(); // Create a Dockerode instance
+
+    // Define the options for running the container
+    const containerOptions = {
+      Image: 'javapit:latest', // Specify the Docker image to run
+      Tty: true, // Enable TTY to capture the output
+      Cmd: ['cat', '/app/pit-reports/mutations.xml'], // Command to execute
+      HostConfig: {
+        AutoRemove: true,
+      },
+    };
+
+    try {
+      // Create and start the container
+      const container = await docker.createContainer(containerOptions);
+      await container.start();
+
+      // Wait for the container to exit
+      const stream = await container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+      });
+
+      let output = '';
+
+      // Capture the container's output
+      stream.on('data', (chunk) => {
+        output += chunk.toString();
+      });
+
+      // Handle the end of the output stream
+      stream.on('end', () => {
+        // Parse XML to JSON
+        parseString(output, (err, result) => {
+          if (err) {
+            res.status(500).send(`Error parsing XML: ${err.message}`);
+          } else {
+            // Send JSON response
+            res.json(result);
+          }
+        });
+      });
+    } catch (error) {
+      res.status(500).send(`Error retrieving text: ${error.message}`);
+    }
+  }
+
+
+  /**
+   * Retrieves the output of the container execution
+   */
+  @Get('/retrieve-pit-xml')
+  async retrieve_pit(@Res() res: Response) {
+    const docker = new Docker(); // Create a Dockerode instance
+
+    // Define the options for running the container
+    const containerOptions = {
+      Image: 'javapit:latest', // Specify the Docker image to run
+      Tty: true, // Enable TTY to capture the output
+      Cmd: ['cat', '/app/pit-reports/mutations.xml'], // Command to execute
+      HostConfig: {
+        AutoRemove: true,
+      },
+    };
+
+    try {
+      // Create and start the container
+      const container = await docker.createContainer(containerOptions);
+      await container.start();
+
+      // Wait for the container to exit
+      const stream = await container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+      });
+
+      let output = '';
+
+      // Capture the container's output
+      stream.on('data', (chunk) => {
+        output += chunk.toString();
+      });
+
+      // Handle the end of the output stream
+      stream.on('end', () => {
+        // Set the response headers for XML
+        res.set('Content-Type', 'application/xml');
+
+        // Send the XML content as the response
+        res.send(output);
+      });
+    } catch (error) {
+      res.status(500).send(`Error retrieving text: ${error.message}`);
+    }
+  }
+
+  async retrieve_pit_xml_as_string() {
+    const docker = new Docker(); // Create a Dockerode instance
+
+    // Define the options for running the container
+    const containerOptions = {
+      Image: 'javapit:latest', // Specify the Docker image to run
+      Tty: true, // Enable TTY to capture the output
+      Cmd: ['cat', '/app/pit-reports/mutations.xml'], // Command to execute
+      HostConfig: {
+        AutoRemove: true,
+      },
+    };
+
+    try {
+      // Create and start the container
+      const container = await docker.createContainer(containerOptions);
+      await container.start();
+
+      // Wait for the container to exit
+      const stream = await container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+      });
 
       return new Promise<{ content: string }>((resolve, reject) => {
         let output = '';
