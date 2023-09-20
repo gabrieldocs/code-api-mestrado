@@ -46,6 +46,17 @@
                   </includes>
                 </configuration>
               </plugin>
+              <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.14.2</version>
+                <configuration>
+                    <outputFormats>
+                        <value>XML</value>
+                    </outputFormats>
+                    <outputDirectory>/app</outputDirectory> <!-- Specify the desired directory -->
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

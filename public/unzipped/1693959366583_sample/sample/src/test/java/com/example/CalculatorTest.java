@@ -52,6 +52,20 @@ public class CalculatorTest {
     }
 
     @Test
+    public void testSum3() {
+        assertEquals(4, calculator.sum(2, 2));
+        assertEquals(10, calculator.sum(5, 5));
+        // Add more test cases for the sum method as needed
+    }
+
+    @Test
+    public void testSum4() {
+        assertEquals(4, calculator.sum(2, 2));
+        assertEquals(10, calculator.sum(5, 5));
+        // Add more test cases for the sum method as needed
+    }
+
+    @Test
     public void testSum() {
         assertEquals(4, calculator.sum(2, 2));
         assertEquals(10, calculator.sum(5, 5));
