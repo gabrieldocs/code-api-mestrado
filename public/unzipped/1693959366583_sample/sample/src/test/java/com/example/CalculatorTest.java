@@ -19,6 +19,19 @@ public class CalculatorTest {
         assertEquals(4, calculator.sum(2, 2));
         assertEquals(10, calculator.sum(5, 5));
     }
+
+    @Test 
+    public void testDiv3() {
+        assertEquals(3, calculator.div(12, 4));
+        assertEquals(10, calculator.div(100, 10));
+    }
+
+    
+    @Test 
+    public void testDiv4() {
+        assertEquals(3, calculator.div(6, 2));
+        assertEquals(10, calculator.div(100, 10));
+    }
     
     @Test 
     public void test0002() {

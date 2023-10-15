@@ -91,7 +91,7 @@ export class CompletitionsController {
   @Get('/contents')
   async contents(@Res() res: Response) {
     try {
-      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`; 
+      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
       res.header('Content-Type', 'text/plain');
@@ -104,7 +104,7 @@ export class CompletitionsController {
   @Post('/write-to-file')
   async writter(@Body() body: { textContent: string }) {
     try {
-      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`; 
+      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const newContent = body.textContent; // Get the posted text content
 
       fs.writeFileSync(filePath, newContent); // Write the new content to the file
@@ -131,7 +131,7 @@ export class CompletitionsController {
         context: contextPath,
         src: ['Dockerfile', 'pom.xml', 'src'], // List of files to include in the build context
       }, {
-        t: 'javalista:latest',
+        t: 'mutants:latest',
       });
 
       // Attach event listeners to capture build progress
@@ -144,7 +144,7 @@ export class CompletitionsController {
         console.log('Image build completed.');
         // Now, you can run the Docker container
         const container = await docker.createContainer({
-          Image: 'javalista:latest',
+          Image: 'mutants:latest',
           AttachStdout: true,
           AttachStderr: true,
           Cmd: ['cat', 'test-output.txt'],
@@ -239,7 +239,7 @@ export class CompletitionsController {
 
     // Define the options for running the container
     const containerOptions = {
-      Image: 'javalista:latest', // Specify the Docker image to run
+      Image: 'mutants:latest', // Specify the Docker image to run
       Tty: true, // Enable TTY to capture the output
       Cmd: ['cat', '/app/test-output.txt'], // Command to execute
     };
@@ -272,6 +272,45 @@ export class CompletitionsController {
       });
     } catch (error) {
       throw new Error(`Error retrieving text: ${error.message}`);
+    }
+  }
+
+  @Get('/retrieve-pit')
+  async retrievePit(@Res() response: Response) {
+    const docker = new Docker(); // Create a Dockerode instance
+
+    // Define the options for running the container
+    const containerOptions = {
+      Image: 'mutants:latest', // Specify the Docker image to run
+      Tty: true, // Enable TTY to capture the output
+      Cmd: ['cat', '/app/pit-reports/mutations.xml'], // Command to execute
+    };
+
+    try {
+      // Create and start the container
+      const container = await docker.createContainer(containerOptions);
+      await container.start();
+
+      // Wait for the container to exit
+      const stream = await container.logs({ follow: true, stdout: true, stderr: true });
+
+      let output = '';
+
+      // Capture the container's output
+      stream.on('data', (chunk) => {
+        output += chunk.toString();
+      });
+
+      // Handle the end of the output stream
+      stream.on('end', () => {
+        // Set the Content-Type header to indicate XML
+        response.set('Content-Type', 'application/xml');
+
+        // Send the XML content as the response
+        response.send(output);
+      });
+    } catch (error) {
+      response.status(500).send(`Error retrieving text: ${error.message}`);
     }
   }
 
