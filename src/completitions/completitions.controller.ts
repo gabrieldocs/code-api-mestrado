@@ -119,7 +119,8 @@ export class CompletitionsController {
   async buildAndRun() {
     try {
       const docker = new Docker();
-      const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
+      // const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
+      const contextPath = './public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
       const dockerfilePath = `${contextPath}/Dockerfile`;
 
       // Check if the Dockerfile exists
@@ -174,7 +175,8 @@ export class CompletitionsController {
   async buildAndRunSync() {
     try {
       const docker = new Docker();
-      const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
+      // const contextPath = 'C://Users/lucgb/Developer/code-api-mestrado/public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
+      const contextPath = './public/unzipped/1693959366583_sample/sample'; // Path to the directory containing the Dockerfile
       const dockerfilePath = `${contextPath}/Dockerfile`;
 
       // Check if the Dockerfile exists
