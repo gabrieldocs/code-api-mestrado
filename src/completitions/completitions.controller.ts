@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -88,12 +89,23 @@ export class CompletitionsController {
     }
   }
 
-  @Get('/contents')
+  @Get('/v1/contents')
   async contents(@Res() res: Response) {
     try {
       const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
+      res.header('Content-Type', 'text/plain');
+      res.send(fileContent);
+    } catch (err) {
+      res.status(404).send('File not found');
+    }
+  }
+
+  @Get('/contents')
+  async getFileContents(@Query('filePath') filePath: string, @Res() res: Response) {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
       res.header('Content-Type', 'text/plain');
       res.send(fileContent);
     } catch (err) {
