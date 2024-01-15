@@ -147,13 +147,25 @@ export class GithubService {
     }
   }
 
+  writeFileToTheDirectory( path: string, directory: string, content: string, commit_message: string): void {
+    fs.writeFile(path, content, (err) => {
+      if(err) {
+        console.error('Error writing file to filepath')
+      } else {
+        console.log('Content successfully updated')
+        this.commitAndPush(directory, commit_message)
+      }
+    })
+
+  }
+
   commitAndPush(directory: string, commitMessage: string) {
     try {
       // Change to the specified directory
       process.chdir(directory);
 
       // Add all files and create a commit
-      execSync('git add .');
+      execSync(`git add .`);
       execSync(`git commit -m "${commitMessage}"`);
 
       // Read GitHub token from .env file
@@ -165,6 +177,7 @@ export class GithubService {
           ...process.env,
           GITHUB_TOKEN: githubToken,
         },
+        stdio: 'inherit',
       });
 
       console.log(`Committed and pushed to the remote origin in '${directory}'.`);

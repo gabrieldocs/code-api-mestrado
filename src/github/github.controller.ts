@@ -26,6 +26,12 @@ export class GithubController {
     return await this.githubService.receiveAndPush(name, description, rarFilePath, destinationPath);    
   }
 
+  @Post('receive-and-commit')
+  async receiveAndCommit(@Body() data: {directory, path, content, commit_message}): Promise<void> {
+    const {path, directory, content, commit_message} = data;
+    return this.githubService.writeFileToTheDirectory(path, directory, content, commit_message)
+  }
+
   @Post()
   create(@Body() createGithubDto: CreateGithubDto) {
     return this.githubService.create(createGithubDto);
