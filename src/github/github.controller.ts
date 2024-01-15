@@ -2,10 +2,29 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { GithubService } from './github.service';
 import { CreateGithubDto } from './dto/create-github.dto';
 import { UpdateGithubDto } from './dto/update-github.dto';
+import * as path from 'path';
+
 
 @Controller('github')
 export class GithubController {
-  constructor(private readonly githubService: GithubService) {}
+  constructor(private readonly githubService: GithubService) { }
+
+  @Get('ping')
+  pong() {
+    return { ping: 'pong' };
+  }
+
+  @Post("create-repository")
+  create_repository(@Body('name') name: string, @Body('description') description: string) {
+    return this.githubService.createRepository(name, description)
+  }
+
+  @Post('receive-and-push')
+  async receiveAndPushCode(@Body() data: { name: string; description: string; rarFilePath: string }): Promise<string> {
+    const { name, description, rarFilePath } = data;
+    const destinationPath = path.resolve('..', 'tempest', name);
+    return await this.githubService.receiveAndPush(name, description, rarFilePath, destinationPath);    
+  }
 
   @Post()
   create(@Body() createGithubDto: CreateGithubDto) {
