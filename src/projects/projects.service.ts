@@ -27,7 +27,7 @@ export class ProjectsService {
     return `This action removes a #${id} project`;
   }
 
-  async folder_structure(folder_path: string): Promise<any> {
+  async folder_structure(): Promise<any> {
     const folderPath = './public/unzipped/1693959366583_sample/sample';
     try {
       const folderStructure = await this.get_folder_structure(folderPath);
@@ -117,6 +117,10 @@ export class ProjectsService {
   }
 
   async contents(filePath, res) {
+    const file_path = __dirname + `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
+
+    console.log(file_path)
+
     try {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       res.header('Content-Type', 'text/plain');
@@ -128,7 +132,7 @@ export class ProjectsService {
 
   async write_to_file(body:  {textContent: string}) {
     try {
-      const filePath = `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
+      const filePath = __dirname + `./public/unzipped/1693959366583_sample/sample/src/test/java/com/example/CalculatorTest.java`;
       const newContent = body.textContent; // Get the posted text content
 
       fs.writeFileSync(filePath, newContent); // Write the new content to the file

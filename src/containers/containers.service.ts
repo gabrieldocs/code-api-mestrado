@@ -16,7 +16,7 @@ import { UpdateContainerDto } from './dto/update-container.dto';
 import * as fs from 'fs';
 import * as Docker from 'dockerode';
 
-import { Response } from 'express';
+import { Response, response } from 'express';
 
 @Injectable()
 export class ContainersService {
@@ -191,13 +191,14 @@ export class ContainersService {
         stream.on('error', (err) => {
           reject(err);
         });
+        
       });
     } catch (error) {
       throw new Error(`Error retrieving text: ${error.message}`);
     }
   }
 
-  async retrieve_pit(response: Response) {
+  async retrieve_pit() {
     const docker = new Docker(); // Create a Dockerode instance
 
     // Define the options for running the container
@@ -224,11 +225,12 @@ export class ContainersService {
 
       // Handle the end of the output stream
       stream.on('end', () => {
+        console.log(output)
         // Set the Content-Type header to indicate XML
         response.set('Content-Type', 'application/xml');
 
         // Send the XML content as the response
-        response.send(output);
+        return response.send(output);
       });
     } catch (error) {
       response.status(500).send(`Error retrieving text: ${error.message}`);

@@ -24,6 +24,7 @@ export class ContainersController {
 
   @Get()
   findAll() {
+    console.log(new Date())
     return this.containersService.findAll();
   }
 
@@ -61,7 +62,8 @@ export class ContainersController {
   }
 
   @Get('/retrieve-pit')
-  async retrievePit(@Res() response: Response) {
-    return this.containersService.retrieve_pit(response);
+  async retrievePit() {
+    // console.log(new Date().toLocaleDateString())
+    return this.containersService.retrieve_pit();
   }
 }

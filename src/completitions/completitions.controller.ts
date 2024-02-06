@@ -9,7 +9,7 @@ import { CompletitionsService } from './completitions.service';
 export class CompletitionsController {
   constructor(private readonly completitionsService: CompletitionsService) { }
 
-  @Post('/generate')
+  @Post('generate')
   async completition(@Body('input') input: string) {
     return await this.completitionsService.completition(input.toString());
   }
